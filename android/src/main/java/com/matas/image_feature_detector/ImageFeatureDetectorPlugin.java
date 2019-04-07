@@ -1,25 +1,42 @@
 package com.matas.image_feature_detector;
 
+import org.bytedeco.javacpp.Loader;
+
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
-/** ImageFeatureDetectorPlugin */
+/**
+ * ImageFeatureDetectorPlugin
+ */
 public class ImageFeatureDetectorPlugin implements MethodCallHandler {
-  /** Plugin registration. */
+  /**
+   * Plugin registration.
+   */
   public static void registerWith(Registrar registrar) {
+    Loader.load(org.bytedeco.javacpp.opencv_java.class);
+
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "image_feature_detector");
     channel.setMethodCallHandler(new ImageFeatureDetectorPlugin());
   }
 
   @Override
   public void onMethodCall(MethodCall call, Result result) {
-    if (call.method.equals("getPlatformVersion")) {
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-    } else {
-      result.notImplemented();
+    switch (call.method) {
+      case "getVersionString":
+        result.success(ImageDetector.getVersionString());
+        break;
+      case "getBuildInformation":
+        result.success(ImageDetector.getBuildInformation());
+        break;
+      case "detectRectangles":
+        String path = call.argument("filePath");
+        result.success(ImageDetector.detectRectangles(path));
+      default:
+        result.notImplemented();
+
     }
   }
 }

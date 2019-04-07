@@ -16,6 +16,6 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    expect(await ImageFeatureDetector.platformVersion, '42');
+    expect(await ImageFeatureDetector.getVersionString, '42');
   });
 }
