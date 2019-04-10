@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:image_feature_detector/image_feature_detector.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(MyApp());
 
@@ -13,6 +16,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
+  String _filePath;
 
   @override
   void initState() {
@@ -30,6 +34,15 @@ class _MyAppState extends State<MyApp> {
       platformVersion = 'Failed to get platform version.';
     }
 
+    try {
+      var directory = await getTemporaryDirectory();
+      var path = "${directory.path}/tmp.png";
+
+      setState(() {
+        _filePath = path;
+      });
+    } on PlatformException {}
+
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling
     // setState to update our non-existent appearance.
@@ -42,14 +55,22 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // var image = _filePath == null ? Container() : Image.file(File(_filePath));
+
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
-        ),
+            child: Column(
+          children: <Widget>[Text('Running on: $_platformVersion\n')],
+        )),
+        floatingActionButton: FloatingActionButton(
+            child: Icon(Icons.image),
+            onPressed: () async => {
+                  print(await ImageFeatureDetector.detectRectangles(_filePath)),
+                }),
       ),
     );
   }
