@@ -14,7 +14,6 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 

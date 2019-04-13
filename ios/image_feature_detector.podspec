@@ -15,6 +15,9 @@ A image feature detector using OpenCV for Android and IOS
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
+  s.dependency 'OpenCV2'
+  
+  s.static_framework = true
 
   s.ios.deployment_target = '8.0'
 end
