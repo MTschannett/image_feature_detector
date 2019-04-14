@@ -36,7 +36,7 @@ public class ImageDetector {
 
     source = ImageTransformer.transformToGrey(source);
     source = ImageTransformer.gaussianBlur(source);
-    source = ImageTransformer.adaptiveTreshold(source);
+    source = ImageTransformer.adaptiveThreshold(source);
 
     ArrayList<MatOfPoint> contours = new ArrayList<>();
 

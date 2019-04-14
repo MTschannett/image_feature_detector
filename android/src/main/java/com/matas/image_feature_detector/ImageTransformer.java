@@ -27,7 +27,7 @@ public class ImageTransformer {
     return destination;
   }
 
-  public static Mat adaptiveTreshold(Mat source) {
+  public static Mat adaptiveThreshold(Mat source) {
     Mat destination = ImageTransformer.createMat(source.width(), source.height());
     Imgproc.adaptiveThreshold(source, destination, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 15, 2);
 

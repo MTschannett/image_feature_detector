@@ -10,6 +10,7 @@ public class SwiftImageFeatureDetectorPlugin: NSObject, FlutterPlugin {
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     ImageFeatureDetectorPlugin.openCVVersionString()
+    ImageFEatuerDetectorPlugin.find
     result("iOS " + UIDevice.current.systemVersion)
   }
 }
