@@ -1,6 +1,6 @@
 # image_feature_detector
 
-A image feature detector using OpenCV for Android and IOS
+A image feature detector using opencv
 
 ## Getting Started
 
