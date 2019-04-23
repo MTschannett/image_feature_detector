@@ -29,10 +29,10 @@ public: string point;
 
 + (NSString *) findImageContour:(NSString *) path {
     cv::Mat source =[OpenCVWrapper _loadImage:path];
-    
-    source = [OpenCVWrapper _grayScale:source];
-    source = [OpenCVWrapper _gaussianBlur:source];
-    source = [OpenCVWrapper _adaptiveThreshold:source];
+
+    source = [self _grayScale:source];
+    source = [self _gaussianBlur:source];
+    source = [self _adaptiveThreshold:source];
     
     vector<vector<cv::Point>> contours;
     vector<Vec4i> hierarchy;
@@ -67,14 +67,14 @@ public: string point;
             cv::Point p = approx[j];
             NSMutableDictionary *point = [[NSMutableDictionary alloc] init];
             
-            point[@"x"] = [NSString stringWithFormat: @"%d", p.x];
-            point[@"y"] = [NSString stringWithFormat: @"%d", p.y];
+            point[@"x"] = [[NSNumber alloc] initWithDouble: p.x];
+            point[@"y"] = [[NSNumber alloc] initWithDouble: p.y];
             
             [points addObject: point];
         }
         
         NSMutableDictionary *contour = [[NSMutableDictionary alloc] init];
-        [contour setObject:points forKey: @"points"];
+        [contour setObject:points forKey: @"contour"];
     
         NSError *err;
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject: contour options:NSJSONWritingPrettyPrinted error:&err];
@@ -86,7 +86,7 @@ public: string point;
 }
 
 + (cv::Mat) _grayScale:(cv::Mat)source {
-    Mat result;
+    Mat result = Mat(source.rows, source.cols, CV_8UC1);
     
     cvtColor(source, result, COLOR_BGR2GRAY);
     
@@ -94,21 +94,27 @@ public: string point;
 }
 
 + (cv::Mat) _loadImage:(NSString *) path {
-    UIImage *source = [UIImage imageWithContentsOfFile:path];
+    UIImage *source = [UIImage imageWithContentsOfFile: path];
     
-    CGImageRef image = CGImageCreateCopy(source.CGImage);
-    CGFloat cols = CGImageGetWidth(image);
-    CGFloat rows = CGImageGetHeight(image);
-    Mat result(rows, cols, CV_8UC1);
+    if (source == nil) {
+        NSException *exception = [NSException
+                                  exceptionWithName:@"File Not Found"
+                                  reason: @"Image seems to be empty or not existent"
+                                  userInfo: nil];
+        
+        @throw exception;
+    }
     
-    CGBitmapInfo bitmapFlags = kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault;
-    size_t bitsPerComponent = 8;
-    size_t bitsPerRow = result.step[0];
-    CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
+    CGColorSpaceRef colorSpace = CGImageGetColorSpace(source.CGImage);
+    CGFloat cols = source.size.width;
+    CGFloat rows = source.size.height;
     
-    CGContextRef context  = CGBitmapContextCreate(result.data, cols, rows, bitsPerComponent, bitsPerRow, colorSpace, bitmapFlags);
-    CGContextDrawImage(context, CGRectMake(0.0f, 0.0f, cols, rows), image);
-    CGContextRelease(context);
+    Mat result(rows, cols, CV_8UC4);
+    
+    CGContextRef contextRef = CGBitmapContextCreate(result.data, cols, rows, 8, result.step[0], colorSpace, kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault);
+    
+    CGContextDrawImage(contextRef, CGRectMake(0, 0, cols, rows), source.CGImage);
+    CGContextRelease(contextRef);
     
     return result;
 }
@@ -135,7 +141,7 @@ public: string point;
 }
 
 + (cv::Mat) _gaussianBlur:(Mat)source {
-    Mat result(source.rows, source.cols, CV_8UC1);
+    Mat result = Mat(source.rows, source.cols, CV_8UC1);
     cv::Size s = cv::Size(3, 3);
     
     GaussianBlur(source, result, s , 0);
@@ -144,7 +150,7 @@ public: string point;
 }
 
 + (cv::Mat) _adaptiveThreshold:(Mat)source {
-    Mat result(source.rows, source.cols, CV_8UC1);
+    Mat result = Mat(source.rows, source.cols, CV_8UC1);
     
     adaptiveThreshold(source, result,255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY_INV, 15, 2);
     return result;
