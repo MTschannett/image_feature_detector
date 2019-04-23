@@ -18,11 +18,18 @@ class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   String _filePath;
   Contour _contour;
+  Point _testPoint;
 
   @override
   void initState() {
     super.initState();
     initPlatformState();
+
+    // Use the RelativeCoodrinateHelper to calculate a value for our point.
+    setState(() {
+      _testPoint = RelativeCoordianteHelper.calculatePointDinstances(
+          Point(x: 0.05, y: 0.05), ImageDimensions(500, 500));
+    });
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -77,7 +84,8 @@ class _MyAppState extends State<MyApp> {
     if (_contour != null) {
       c = Column(
         children: _contour.contour.map((p) {
-          return Text("X: ${p.x}, Y: ${p.y}");
+          return Text(
+              "X: ${RelativeCoordianteHelper.calculateDistance(p.x, 500)}, Y: ${RelativeCoordianteHelper.calculateDistance(p.y, 500)}");
         }).toList(),
       );
     } else {
@@ -93,7 +101,13 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Center(
             child: Column(
-          children: <Widget>[Text('Running on: $_platformVersion\n'), c],
+          children: <Widget>[
+            Text('Running on: $_platformVersion\n'),
+            c,
+            Text("Example RelativePointHelper using Point:"),
+            Text(
+                "Calculated values: x: ${_testPoint != null ? _testPoint.x : "-"}, y: ${_testPoint != null ? _testPoint.y : "-"}")
+          ],
         )),
         floatingActionButton: FloatingActionButton(
             child: Icon(Icons.image),

@@ -17,6 +17,8 @@ class Point {
   double x;
   double y;
 
+  Point({this.x, this.y});
+
   // Leave this * 1.0 because I don't found a better way to cast a int to a double
   Point.fromJson(Map<String, dynamic> data)
       : x = data['x'] * 1.0,

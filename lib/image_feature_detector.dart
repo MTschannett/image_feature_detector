@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:image_feature_detector/entity/contour.dart';
 
 export './entity/contour.dart';
+export './relative_coordinate_helper.dart';
 
 class ImageFeatureDetector {
   static const MethodChannel _channel =
