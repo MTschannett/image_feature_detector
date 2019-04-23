@@ -38,7 +38,6 @@ class _MyAppState extends State<MyApp> {
     try {
       var directory2 = await getApplicationDocumentsDirectory();
 
-      var directory = await getTemporaryDirectory();
       var path = "${directory2.path}/images/tmp.png";
 
       var file = File(path);

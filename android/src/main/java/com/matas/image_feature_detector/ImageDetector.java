@@ -74,8 +74,8 @@ public class ImageDetector {
 
       for (Point p : approx.toList()) {
         JSONObject o = new JSONObject();
-        o.put("x", p.x);
-        o.put("y", p.y);
+        o.put("x", (p.x / source.cols()));
+        o.put("y", (p.y / source.rows()));
 
         points.put(o);
       }

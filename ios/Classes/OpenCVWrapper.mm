@@ -66,9 +66,10 @@ public: string point;
         for(size_t j = 0; j < approx.size(); j++) {
             cv::Point p = approx[j];
             NSMutableDictionary *point = [[NSMutableDictionary alloc] init];
-            
-            point[@"x"] = [[NSNumber alloc] initWithDouble: p.x];
-            point[@"y"] = [[NSNumber alloc] initWithDouble: p.y];
+            double relativeX = (double)p.x / (double)source.cols;
+            double relativeY = (double)p.y / (double)source.rows;
+            point[@"x"] = [[NSNumber alloc] initWithDouble: relativeX];
+            point[@"y"] = [[NSNumber alloc] initWithDouble: relativeY];
             
             [points addObject: point];
         }
