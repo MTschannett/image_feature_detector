@@ -1,7 +1,7 @@
 name: image_feature_detector
 description: A image feature detector using OpenCV for Android and IOS
 version: 0.1.0
-author: Marco Tschannett
+author: "Marco Tschannett<me@mtsch.dev>"
 homepage: https://github.com/MTschannett/image_feature_detector
 repository: https://github.com/MTschannett/image_feature_detector
 documentation: 
