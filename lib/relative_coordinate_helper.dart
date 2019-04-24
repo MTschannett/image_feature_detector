@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import './entity/contour.dart';
 
 class ImageDimensions {

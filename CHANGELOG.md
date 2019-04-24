@@ -1,3 +1,7 @@
+## 0.1.1
+
+Added longer description to pubspec and other fixes from pub
+
 ## 0.1.0
 
 This is the initial release fo this package
