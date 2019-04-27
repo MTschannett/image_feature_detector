@@ -1,24 +1,17 @@
 import './entity/contour.dart';
-
-class ImageDimensions {
-  final int height;
-  final int width;
-
-  ImageDimensions(this.height, this.width);
-}
+import 'entity/image_dimensions.dart';
 
 class RelativeCoordianteHelper {
-  static double calculateDistance(
-      double relativeCoordinate, double axisLength) {
-    return relativeCoordinate * axisLength;
+  static int calculateDistance(double relativeCoordinate, int axisLength) {
+    return (relativeCoordinate * axisLength).round();
   }
 
   static Point calculatePointDinstances(
       Point relativeValues, ImageDimensions dimensions) {
     var temp = Point();
 
-    temp.x = relativeValues.x * dimensions.width;
-    temp.y = relativeValues.y * dimensions.height;
+    temp.x = (relativeValues.x * dimensions.width).roundToDouble();
+    temp.y = relativeValues.y * dimensions.height.roundToDouble();
 
     return temp;
   }
