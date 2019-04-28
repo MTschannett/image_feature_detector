@@ -21,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (UIImage *) _matToImage:(cv::Mat) source;
 + (cv::Mat) _gaussianBlur: (cv::Mat)source;
 + (cv::Mat) _adaptiveThreshold: (cv::Mat) source;
++ (cv::Mat) _transformSobel: (cv::Mat) source;
++ (cv::Mat) _cannyEdgeDetect: (cv::Mat) source;
 @end
 
 NS_ASSUME_NONNULL_END

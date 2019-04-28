@@ -45,11 +45,11 @@ class _MyAppState extends State<MyApp> {
     try {
       var directory2 = await getApplicationDocumentsDirectory();
 
-      var path = "${directory2.path}/images/tmp.png";
+      var path = "${directory2.path}/images/tmp3.png";
 
       var file = File(path);
       if (!await file.exists()) {
-        var data = await rootBundle.load("images/rectangle.png");
+        var data = await rootBundle.load("images/rectangle.jpg");
 
         try {
           await file.create(recursive: true);
@@ -85,7 +85,7 @@ class _MyAppState extends State<MyApp> {
       c = Column(
         children: _contour.contour.map((p) {
           return Text(
-              "X: ${RelativeCoordianteHelper.calculateDistance(p.x, 500)}, Y: ${RelativeCoordianteHelper.calculateDistance(p.y, 500)}");
+              "X: ${RelativeCoordianteHelper.calculateDistance(p.x, _contour.dimensions.width)}, Y: ${RelativeCoordianteHelper.calculateDistance(p.y, _contour.dimensions.height)}");
         }).toList(),
       );
     } else {

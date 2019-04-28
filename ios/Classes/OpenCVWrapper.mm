@@ -10,6 +10,8 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#import "ImageHelper.h"
+
 
 using namespace cv;
 using namespace std;
@@ -27,12 +29,13 @@ public: string point;
     return @"Just a placeholder";
 }
 
-+ (NSString *) findImageContour:(NSString *) path {
++ (NSString *)  findImageContour:(NSString *) path {
     cv::Mat source =[OpenCVWrapper _loadImage:path];
 
     source = [self _grayScale:source];
+    source = [self _transformSobel:source];
+    source = [self _cannyEdgeDetect:source];
     source = [self _gaussianBlur:source];
-    source = [self _adaptiveThreshold:source];
     
     vector<vector<cv::Point>> contours;
     vector<Vec4i> hierarchy;
@@ -41,49 +44,55 @@ public: string point;
     
     double maxArea = 0;
     vector<cv::Point> maxContour;
+    vector<cv::Point> maxApprox;
     
     for(size_t i = 0; i < contours.size(); i++) {
-        double area = contourArea(contours[i]);
+        vector<cv::Point> approx;
+        double peri = arcLength(contours[i], true);
         
-        if (area > maxArea) {
-            maxArea = area;
-            maxContour = contours[i];
+        approxPolyDP(contours[i], approx, 0.04 * peri, true);
+        if (approx.size() == 4) {
+            
+            double area = contourArea(contours[i]);
+            
+            if (area > maxArea) {
+                maxArea = area;
+                maxContour = contours[i];
+                maxApprox = approx;
+            }
         }
     }
     
     if (maxContour.empty()) {
-        return {};
-    }
-    vector<cv::Point> approx;
-    double peri = arcLength(maxContour, true);
-    
-    approxPolyDP(maxContour, approx, 0.04 * peri, true);
-    
-    if (!approx.empty() || approx.size() == 4) {
-        // NSMutableDictionary *points = [[NSMutableDictionary alloc] init];
-        NSMutableArray<NSMutableDictionary *> *points = [[NSMutableArray alloc] init];
-        
-        for(size_t j = 0; j < approx.size(); j++) {
-            cv::Point p = approx[j];
-            NSMutableDictionary *point = [[NSMutableDictionary alloc] init];
-            double relativeX = (double)p.x / (double)source.cols;
-            double relativeY = (double)p.y / (double)source.rows;
-            point[@"x"] = [[NSNumber alloc] initWithDouble: relativeX];
-            point[@"y"] = [[NSNumber alloc] initWithDouble: relativeY];
-            
-            [points addObject: point];
-        }
-        
-        NSMutableDictionary *contour = [[NSMutableDictionary alloc] init];
-        [contour setObject:points forKey: @"contour"];
-    
-        NSError *err;
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject: contour options:NSJSONWritingPrettyPrinted error:&err];
-        
-        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        return NULL;
     }
     
-    return NULL;
+    // NSMutableDictionary *points = [[NSMutableDictionary alloc] init];
+    NSMutableArray<NSMutableDictionary *> *points = [[NSMutableArray alloc] init];
+    
+    for(size_t j = 0; j < maxApprox.size(); j++) {
+        cv::Point p = maxApprox[j];
+        NSMutableDictionary *point = [[NSMutableDictionary alloc] init];
+        double relativeX = (double)p.x / (double)source.cols;
+        double relativeY = (double)p.y / (double)source.rows;
+        point[@"x"] = [[NSNumber alloc] initWithDouble: relativeX];
+        point[@"y"] = [[NSNumber alloc] initWithDouble: relativeY];
+        
+        [points addObject: point];
+    }
+    
+    NSMutableDictionary *contour = [[NSMutableDictionary alloc] init];
+    [contour setObject:points forKey: @"contour"];
+    
+    NSMutableDictionary *dimensions = [[NSMutableDictionary alloc] init];
+    [dimensions setObject: [NSNumber numberWithInteger: source.cols] forKey:@"width"];
+    [dimensions setObject: [NSNumber numberWithInteger:source.rows] forKey: @"height"];
+
+    [contour setObject:dimensions forKey: @"dimensions"];
+    NSError *err;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject: contour options:NSJSONWritingPrettyPrinted error:&err];
+    
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
 + (cv::Mat) _grayScale:(cv::Mat)source {
@@ -96,6 +105,8 @@ public: string point;
 
 + (cv::Mat) _loadImage:(NSString *) path {
     UIImage *source = [UIImage imageWithContentsOfFile: path];
+    
+    source = [ImageHelper adjustImageOrientationWithExif:source];
     
     if (source == nil) {
         NSException *exception = [NSException
@@ -141,6 +152,28 @@ public: string point;
     return result;
 }
 
++ (cv::Mat) _transformSobel:(cv::Mat)source {
+    int width = source.cols;
+    int height = source.rows;
+    
+    Mat destination = Mat(width, height, CV_8UC1);
+    
+    Mat sobelX  =Mat(width, height, CV_8UC1);
+    Mat sobelY = Mat(width, height, CV_8UC1);
+    Mat absSobelX = Mat(width, height, CV_8UC1);
+    Mat absSobelY = Mat(width, height, CV_8UC1);
+    
+    Sobel(source, sobelX, CV_16S, 1, 0);
+    Sobel(source, sobelY, CV_16S, 0, 1);
+    
+    convertScaleAbs(sobelX, absSobelX);
+    convertScaleAbs(sobelY, absSobelY);
+    
+    addWeighted(absSobelX, 0.5, absSobelY, 0.5, 0, destination);
+    
+    return destination;
+}
+
 + (cv::Mat) _gaussianBlur:(Mat)source {
     Mat result = Mat(source.rows, source.cols, CV_8UC1);
     cv::Size s = cv::Size(3, 3);
@@ -154,6 +187,14 @@ public: string point;
     Mat result = Mat(source.rows, source.cols, CV_8UC1);
     
     adaptiveThreshold(source, result,255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY_INV, 15, 2);
+    return result;
+}
+
++ (Mat) _cannyEdgeDetect:(Mat) source {
+    Mat result = Mat(source.rows, source.cols, CV_8UC1);
+    
+    Canny(source, result, 10, 100);
+    
     return result;
 }
 @end

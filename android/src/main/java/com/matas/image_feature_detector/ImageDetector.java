@@ -1,7 +1,6 @@
 package com.matas.image_feature_detector;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -11,80 +10,91 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
-public class ImageDetector {
-  public static String getVersionString() {
+class ImageDetector {
+  static String getVersionString() {
     return Core.getVersionString();
   }
 
-  public static String getBuildInformation() {
+  static String getBuildInformation() {
     return Core.getBuildInformation();
   }
 
-  public static String detectRectangles(String filePath) throws JSONException {
-    BitmapFactory.Options options = new BitmapFactory.Options();
-    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
+  static String detectRectangles(String filePath)  {
+    Bitmap image = ImageTransformer.loadAndRotateImage(filePath);
     Mat source = new Mat();
 
-    Utils.bitmapToMat(BitmapFactory.decodeFile(filePath, options), source);
+    assert image != null;
+
+    Utils.bitmapToMat(image, source);
 
     source = ImageTransformer.transformToGrey(source);
+    source = ImageTransformer.transformSobel(source);
+    source = ImageTransformer.cannyEdgeDetect(source);
     source = ImageTransformer.gaussianBlur(source);
-    source = ImageTransformer.adaptiveThreshold(source);
 
     ArrayList<MatOfPoint> contours = new ArrayList<>();
 
-    Imgproc.findContours(source, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+    Imgproc.findContours(
+            source,
+            contours,
+            new Mat(),
+            Imgproc.RETR_TREE,
+            Imgproc.CHAIN_APPROX_SIMPLE);
 
     double maxArea = 0;
-    MatOfPoint maxContour = null;
-    Iterator<MatOfPoint> iterator = contours.iterator();
+    MatOfPoint2f maxApprox = null;
 
-    while (iterator.hasNext()) {
-      MatOfPoint contour = iterator.next();
-      double area = Imgproc.contourArea(contour);
+    for (MatOfPoint contour : contours) {
+      MatOfPoint2f maxContour2f = new MatOfPoint2f(contour.toArray());
+      double peri = Imgproc.arcLength(maxContour2f, true);
+      MatOfPoint2f approx = new MatOfPoint2f();
+      Imgproc.approxPolyDP(maxContour2f, approx, 0.04 * peri, true);
 
-      if (area > maxArea) {
-        maxContour = contour;
-        maxArea = area;
+      if (approx.total() == 4) {
+        double area = Imgproc.contourArea(contour);
+
+        if (area > maxArea) {
+          maxApprox = approx;
+          maxArea = area;
+        }
       }
     }
 
-    if (maxContour == null) {
-      // TODO: maybe we should throw an error here.
+    if (maxApprox == null) {
       return null;
     }
 
-    MatOfPoint2f maxContour2f = new MatOfPoint2f(maxContour.toArray());
-    double peri = Imgproc.arcLength(maxContour2f, true);
-    MatOfPoint2f approx = new MatOfPoint2f();
-    Imgproc.approxPolyDP(maxContour2f, approx, 0.04 * peri, true);
+    try {
+      return ImageDetector.serializeRectangleData(maxApprox,source).toString();
+    } catch(JSONException e) {
+      return null;
+    }
+  }
 
-    if (approx.total() == 4) {
-      System.out.print("Rectangle or square found");
-      // List<Contour> points = new ArrayList<>();
-      JSONObject contour = new JSONObject();
-      JSONArray points = new JSONArray();
+  private static JSONObject serializeRectangleData(MatOfPoint2f approx, Mat source) throws JSONException {
+    JSONObject contour = new JSONObject();
+    JSONArray points = new JSONArray();
+    JSONObject dimensions = new JSONObject();
 
-      for (Point p : approx.toList()) {
-        JSONObject o = new JSONObject();
-        o.put("x", (p.x / source.cols()));
-        o.put("y", (p.y / source.rows()));
+    for (int i = 0; i < 4; i++) {
+      double[] t = approx.get(i, 0);
+      JSONObject o = new JSONObject();
+      o.put("x", (t[0] / source.cols()));
+      o.put("y", (t[1] / source.rows()));
 
-        points.put(o);
-      }
-
-      contour.put("contour", points);
-
-      return contour.toString();
+      points.put(o);
     }
 
-    return null;
+    dimensions.put("height", source.rows());
+    dimensions.put("width", source.cols());
+
+    contour.put("dimensions", dimensions);
+    contour.put("contour", points);
+
+    return contour;
   }
 }
