@@ -19,6 +19,7 @@ class _MyAppState extends State<MyApp> {
   String _filePath;
   Contour _contour;
   Point _testPoint;
+  TransformedImage _transfomed;
 
   @override
   void initState() {
@@ -45,11 +46,11 @@ class _MyAppState extends State<MyApp> {
     try {
       var directory2 = await getApplicationDocumentsDirectory();
 
-      var path = "${directory2.path}/images/tmp3.png";
+      var path = "${directory2.path}/images/tmp5.png";
 
       var file = File(path);
       if (!await file.exists()) {
-        var data = await rootBundle.load("images/rectangle.jpg");
+        var data = await rootBundle.load("images/rectangle2.jpg");
 
         try {
           await file.create(recursive: true);
@@ -80,6 +81,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     // var image = _filePath == null ? Container() : Image.file(File(_filePath));
     Column c;
+    Widget image;
 
     if (_contour != null) {
       c = Column(
@@ -94,6 +96,12 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
+    if (_transfomed != null) {
+      image = Image.file(File(_transfomed.filePath));
+    } else {
+      image = Text("Press button to get transformed image");
+    }
+
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -106,17 +114,23 @@ class _MyAppState extends State<MyApp> {
             c,
             Text("Example RelativePointHelper using Point:"),
             Text(
-                "Calculated values: x: ${_testPoint != null ? _testPoint.x : "-"}, y: ${_testPoint != null ? _testPoint.y : "-"}")
+                "Calculated values: x: ${_testPoint != null ? _testPoint.x : "-"}, y: ${_testPoint != null ? _testPoint.y : "-"}"),
+            image
           ],
         )),
         floatingActionButton: FloatingActionButton(
             child: Icon(Icons.image),
             onPressed: () async {
               try {
-                var c = await ImageFeatureDetector.detectRectangles(_filePath);
-                setState(() {
-                  _contour = c;
+                // var c = await ImageFeatureDetector.detectRectangles(_filePath);
+                setState(() async {
+                  _transfomed =
+                      await ImageFeatureDetector.detectAndTransformRectangle(
+                          _filePath);
                 });
+                // setState(() {
+                //   _contour = c;
+                // });
               } on PlatformException {
                 print("error happened");
               }
