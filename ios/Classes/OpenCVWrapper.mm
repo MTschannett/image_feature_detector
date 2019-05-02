@@ -29,9 +29,35 @@ public: string point;
     return @"Just a placeholder";
 }
 
++ (NSString *) detectAndTransformRectangleInImage: (NSString *) path {
+    Mat source = [OpenCVWrapper _loadImage: path];
+    
+    vector<cv::Point> maxApprox = [OpenCVWrapper findContourInImage:source];
+    
+    if (maxApprox.empty()) {
+        return NULL;
+    }
+    
+}
+
 + (NSString *)  findImageContour:(NSString *) path {
     cv::Mat source =[OpenCVWrapper _loadImage:path];
 
+    vector<cv::Point> maxApprox = [OpenCVWrapper findContourInImage:source];
+    
+    if (maxApprox.empty()) {
+        return NULL;
+    }
+    
+    NSDictionary *contour =  [OpenCVWrapper serializeContour:maxApprox source:source];
+    
+    NSError *err;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject: contour options:NSJSONWritingPrettyPrinted error:&err];
+    
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+}
+
++ (vector<cv::Point>) findContourInImage: (Mat) source {
     source = [self _grayScale:source];
     source = [self _transformSobel:source];
     source = [self _cannyEdgeDetect:source];
@@ -63,11 +89,10 @@ public: string point;
         }
     }
     
-    if (maxContour.empty()) {
-        return NULL;
-    }
-    
-    // NSMutableDictionary *points = [[NSMutableDictionary alloc] init];
+    return maxApprox;
+}
+
++ (NSMutableDictionary*) serializeContour: (vector<cv::Point>) maxApprox source:(cv::Mat) source {
     NSMutableArray<NSMutableDictionary *> *points = [[NSMutableArray alloc] init];
     
     for(size_t j = 0; j < maxApprox.size(); j++) {
@@ -87,12 +112,10 @@ public: string point;
     NSMutableDictionary *dimensions = [[NSMutableDictionary alloc] init];
     [dimensions setObject: [NSNumber numberWithInteger: source.cols] forKey:@"width"];
     [dimensions setObject: [NSNumber numberWithInteger:source.rows] forKey: @"height"];
-
-    [contour setObject:dimensions forKey: @"dimensions"];
-    NSError *err;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject: contour options:NSJSONWritingPrettyPrinted error:&err];
     
-    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    [contour setObject:dimensions forKey: @"dimensions"];
+    
+    return contour;
 }
 
 + (cv::Mat) _grayScale:(cv::Mat)source {

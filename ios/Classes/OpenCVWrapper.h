@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *) getVersionString;
 + (NSString *) getBuildInformation;
 + (NSString *) findImageContour: (NSString *) path;
++ (NSString *) detectAndTransformRectangleInImage: (NSString *) path;
 + (cv::Mat) _grayScale:(cv::Mat)source;
 + (cv::Mat) _loadImage:(NSString *) source;
 + (UIImage *) _matToImage:(cv::Mat) source;
@@ -23,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (cv::Mat) _adaptiveThreshold: (cv::Mat) source;
 + (cv::Mat) _transformSobel: (cv::Mat) source;
 + (cv::Mat) _cannyEdgeDetect: (cv::Mat) source;
++ (NSMutableDictionary*) serializeContour: (vector<cv::Point>) points: source:(cv::Mat) source;
++ (vector<cv::Point>) findContourInImage: (cv::Mat)source;
 @end
 
 NS_ASSUME_NONNULL_END
