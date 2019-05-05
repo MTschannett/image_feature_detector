@@ -11,7 +11,8 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #import "ImageHelper.h"
-
+#import "PointsHelper.h"
+#include "math.h"
 
 using namespace cv;
 using namespace std;
@@ -38,6 +39,52 @@ public: string point;
         return NULL;
     }
     
+    vector<cv::Point> temp = maxApprox;
+    cv::Point2f src[4], dest[4];
+    
+    [PointsHelper sortPoints:temp withList:src];
+    
+    cv::Point2f tl = src[0];
+    cv::Point2f tr = src[1];
+    cv::Point2f br = src[2];
+    cv::Point2f bl = src[3];
+    
+    
+    double widthA = sqrt(pow((br.x - bl.x), 2) + pow(br.y - bl.y, 2));
+    double widthB = sqrt(pow(tr.x - tl.y, 2) + pow(tr.y - tl.y, 2));
+    int maxWidth = (int)fmax(widthA, widthB);
+    
+    double heightA = sqrt(pow(tr.x - br.x, 2) + pow(tr.y - br.y, 2));
+    double heightB = sqrt(pow(tl.x - bl.x, 2) + pow(tl.y - bl.y, 2));;
+    int maxHeight = (int)fmax(heightA, heightB);
+    
+    dest[0] = cv::Point2f(0, 0);
+    
+    dest[1] = cv::Point2f(maxWidth -1, 0);
+    dest[2] = cv::Point2f(maxWidth -1, maxHeight -1);
+    dest[3] = cv::Point2f(0, maxHeight -1);
+    
+    Mat matrix = getPerspectiveTransform(src, dest);
+    Mat destination = cv::Mat(maxWidth, maxHeight, CV_8UC4);
+    warpPerspective(source, destination, matrix, cv::Size(maxWidth, maxHeight));
+    
+    NSNumber *timestamp = [NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]];
+    NSString *fileName = [NSString stringWithFormat: @"transformed-image%@.png", timestamp];
+    
+    NSString *outputPath = [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent: fileName];
+    UIImage *image = [OpenCVWrapper _matToImage:destination];
+    NSData *binaryImageData = UIImagePNGRepresentation(image);
+    
+    [binaryImageData writeToFile:outputPath atomically:YES];
+    
+    NSMutableDictionary *resultData = [[NSMutableDictionary alloc] init];
+    resultData[@"filePath"] = outputPath;
+    resultData[@"foundFeatures"] = [OpenCVWrapper serializeContour:maxApprox image:source];
+    
+    NSError *err;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:resultData options:NSJSONWritingPrettyPrinted error:&err];
+    
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
 + (NSString *)  findImageContour:(NSString *) path {
@@ -49,7 +96,7 @@ public: string point;
         return NULL;
     }
     
-    NSDictionary *contour =  [OpenCVWrapper serializeContour:maxApprox source:source];
+    NSDictionary *contour =  [OpenCVWrapper serializeContour:maxApprox image:source];
     
     NSError *err;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject: contour options:NSJSONWritingPrettyPrinted error:&err];
@@ -57,16 +104,17 @@ public: string point;
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
-+ (vector<cv::Point>) findContourInImage: (Mat) source {
-    source = [self _grayScale:source];
-    source = [self _transformSobel:source];
-    source = [self _cannyEdgeDetect:source];
-    source = [self _gaussianBlur:source];
++ (std::vector<cv::Point>) findContourInImage: (cv::Mat)source {
+    cv::Mat s = source;
+    s = [self _grayScale:s];
+    s = [self _transformSobel:s];
+    s = [self _cannyEdgeDetect:s];
+    s = [self _gaussianBlur:s];
     
     vector<vector<cv::Point>> contours;
     vector<Vec4i> hierarchy;
     
-    findContours(source, contours, hierarchy, cv::RETR_TREE, CHAIN_APPROX_SIMPLE);
+    findContours(s, contours, hierarchy, cv::RETR_TREE, CHAIN_APPROX_SIMPLE);
     
     double maxArea = 0;
     vector<cv::Point> maxContour;
@@ -92,8 +140,8 @@ public: string point;
     return maxApprox;
 }
 
-+ (NSMutableDictionary*) serializeContour: (vector<cv::Point>) maxApprox source:(cv::Mat) source {
-    NSMutableArray<NSMutableDictionary *> *points = [[NSMutableArray alloc] init];
++ (NSMutableDictionary*) serializeContour: (std::vector<cv::Point>) maxApprox image:(cv::Mat) source {
+    NSMutableArray<NSMutableDictionary*> *points = [[NSMutableArray alloc] init];
     
     for(size_t j = 0; j < maxApprox.size(); j++) {
         cv::Point p = maxApprox[j];

@@ -13,12 +13,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface PointsHelper : NSObject
-+(vector<cv::Point>*) sortPoints: (vector<cv::Point>)unsortedPoints;
-- (cv::Point*) getTopLeftPoint: (vector<cv::Point>)unsortedPoints;
-- (cv::Point*) getTopRightPoint: (vector<cv::Point>)unsortedPoints;
-- (cv::Point*) getBottomRightPoint: (vector<cv::Point>)unsortedPoints;
-- (cv::Point*) getBottomLeftPoint: (vector<cv::Point>)unsortedPoints;
-
++(void) sortPoints: (std::vector<cv::Point>)unsortedPoints withList:(cv::Point2f[]) baseList;
++(void) getTopLeftPoint: (std::vector<cv::Point>) points addToList:(cv::Point2f[]) list;
++(void) getBottomLeftPoint: (std::vector<cv::Point>) points addToList:(cv::Point2f[]) list;
++(void) getTopRightPoint: (std::vector<cv::Point>) points addToList:(cv::Point2f[]) list;
++(void) getBottomRightPoint: (std::vector<cv::Point>) points addToList:(cv::Point2f[]) list;
 @end
 
 NS_ASSUME_NONNULL_END

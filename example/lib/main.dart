@@ -123,10 +123,11 @@ class _MyAppState extends State<MyApp> {
             onPressed: () async {
               try {
                 // var c = await ImageFeatureDetector.detectRectangles(_filePath);
-                setState(() async {
-                  _transfomed =
-                      await ImageFeatureDetector.detectAndTransformRectangle(
-                          _filePath);
+                var transformed =
+                    await ImageFeatureDetector.detectAndTransformRectangle(
+                        _filePath);
+                setState(() {
+                  _transfomed = transformed;
                 });
                 // setState(() {
                 //   _contour = c;

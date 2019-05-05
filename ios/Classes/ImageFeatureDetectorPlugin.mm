@@ -20,7 +20,7 @@
       NSString * path = call.arguments[@"filePath"];
       result([OpenCVWrapper findImageContour: path]);
   } else if([@"detectAndTransformRectangle" isEqualToString:call.method]) {
-      result([OpenCVWrapper detectAndTransformRectangleInImage: call.arguments[@"filePath"]];
+      result([OpenCVWrapper detectAndTransformRectangleInImage: call.arguments[@"filePath"]]);
   } else {
     result(FlutterMethodNotImplemented);
   }

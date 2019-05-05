@@ -24,8 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (cv::Mat) _adaptiveThreshold: (cv::Mat) source;
 + (cv::Mat) _transformSobel: (cv::Mat) source;
 + (cv::Mat) _cannyEdgeDetect: (cv::Mat) source;
-+ (NSMutableDictionary*) serializeContour: (vector<cv::Point>) points: source:(cv::Mat) source;
-+ (vector<cv::Point>) findContourInImage: (cv::Mat)source;
++ (NSMutableDictionary*) serializeContour: (std::vector<cv::Point>) maxApprox image:(cv::Mat) source;
++ (std::vector<cv::Point>) findContourInImage: (cv::Mat)source;
 @end
 
 NS_ASSUME_NONNULL_END
