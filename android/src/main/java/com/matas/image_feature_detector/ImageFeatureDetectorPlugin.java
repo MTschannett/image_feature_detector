@@ -32,9 +32,11 @@ public class ImageFeatureDetectorPlugin implements MethodCallHandler {
         result.success(ImageDetector.getBuildInformation());
         break;
       case "detectRectangles":
-        String path = call.argument("filePath");
-          result.success(ImageDetector.detectRectangles(path));
-      default:
+        result.success(ImageDetector.detectRectangles((String)call.argument("filePath")));
+      case "detectAndTransformRectangle":
+        result.success(ImageDetector.detectAndTransformRectangleInImage(
+            (String)call.argument("filePath")));
+        default:
         result.notImplemented();
     }
   }

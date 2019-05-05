@@ -30,6 +30,12 @@ rectangle.contour[0].x; // Access X
 rectangle.contour[0].y; // Access the y value.
 ```
 
+To detect and transform the image into a normalized image use following api:
+
+```dart
+var imageData = ImageFeatureDetector.detectAndTransformRectangle(_filePath);
+```
+
 ### Quick Aside: Relative Coordiantes
 
 To be as size independent as possible this package uses relative coordinates. 
