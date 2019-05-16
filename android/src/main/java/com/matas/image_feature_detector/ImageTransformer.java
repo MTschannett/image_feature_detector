@@ -82,7 +82,7 @@ public class ImageTransformer {
    */
   public static Mat gaussianBlur(Mat source) {
     Mat destination = ImageTransformer.createMat(source.width(), source.height());
-    Imgproc.GaussianBlur(source, destination, new Size(3, 3), 0);
+    Imgproc.GaussianBlur(source, destination, new Size(5,5), 0);
 
     return destination;
   }
@@ -107,7 +107,7 @@ public class ImageTransformer {
    */
   public static Mat cannyEdgeDetect(Mat source) {
     Mat destination = ImageTransformer.createMat(source.width(), source.height());
-    Imgproc.Canny(source, destination, 10, 100);
+    Imgproc.Canny(source, destination, 75, 200);
 
     return destination;
   }

@@ -17,6 +17,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 class ImageDetector {
@@ -131,9 +133,8 @@ class ImageDetector {
 
   private static MatOfPoint2f findContoursFromImage(Mat source) {
     source = ImageTransformer.transformToGrey(source);
-    source = ImageTransformer.transformSobel(source);
-    source = ImageTransformer.cannyEdgeDetect(source);
     source = ImageTransformer.gaussianBlur(source);
+    source = ImageTransformer.cannyEdgeDetect(source);
 
     ArrayList<MatOfPoint> contours = new ArrayList<>();
 
@@ -141,10 +142,24 @@ class ImageDetector {
         source,
         contours,
         new Mat(),
-        Imgproc.RETR_TREE,
+        Imgproc.RETR_LIST,
         Imgproc.CHAIN_APPROX_SIMPLE);
 
-    double maxArea = 0;
+      Collections.sort(contours, new Comparator<MatOfPoint>() {
+          @Override
+          public int compare(MatOfPoint o1, MatOfPoint o2) {
+              double first = Imgproc.contourArea(new MatOfPoint2f(o1.toArray()));
+              double second = Imgproc.contourArea( new MatOfPoint2f(o2.toArray()));
+
+              if (first == second ) {
+                  return 0;
+              }
+
+              return first > second ? 1 : -1;
+          }
+      });
+
+    contours = (ArrayList<MatOfPoint>)contours.subList(0 , 5);
     MatOfPoint2f maxApprox = null;
 
     for (MatOfPoint contour : contours) {
@@ -154,12 +169,8 @@ class ImageDetector {
       Imgproc.approxPolyDP(maxContour2f, approx, 0.04 * peri, true);
 
       if (approx.total() == 4) {
-        double area = Imgproc.contourArea(contour);
-
-        if (area > maxArea) {
-          maxApprox = approx;
-          maxArea = area;
-        }
+        maxApprox = approx;
+        break;
       }
     }
 
