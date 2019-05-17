@@ -15,7 +15,7 @@ class ImageHelper {
    */
   static Mat loadImage(String path) {
     Mat source = new Mat();
-    Bitmap image = ImageTransformer.loadAndRotateImage(path);
+    Bitmap image = ImageUtils.loadAndRotateImage(path);
 
     Utils.bitmapToMat(image, source);
 

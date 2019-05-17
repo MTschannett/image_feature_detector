@@ -20,9 +20,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 class ImageDetector {
-  /**
+  /**l
    * Returns the version string for the current OpenCV implementation.
    *
    * @return String containing version string
@@ -43,10 +45,11 @@ class ImageDetector {
   static String detectRectangles(String filePath) {
     Mat source = ImageHelper.loadImage(filePath);
 
-    MatOfPoint2f maxApprox = ImageDetector.findContoursFromImage(source);
+    RectFinder finder = new RectFinder(.2, .98);
+    MatOfPoint2f rectangle = finder.findRectangle(source);
 
     try {
-      return ImageDetector.serializeRectangleData(maxApprox, source).toString();
+      return ImageDetector.serializeRectangleData(rectangle, source).toString();
     } catch (JSONException e) {
       return null;
     }
@@ -95,15 +98,18 @@ class ImageDetector {
    */
   static String detectAndTransformRectangleInImage(String path) {
     Mat image = ImageHelper.loadImage(path);
-    MatOfPoint2f foundContours = ImageDetector.findContoursFromImage(image);
 
-    Mat warped = ImageTransformer.transformPerspectiveWarp(
-        image, foundContours
-    );
+    RectFinder finder = new RectFinder(.2, .98);
+    MatOfPoint2f rectangle = finder.findRectangle(image);
 
-    Bitmap b = Bitmap.createBitmap(warped.width(), warped.height(), Bitmap.Config.ARGB_8888);
+    if (rectangle == null) {
+      return null;
+    }
 
-    Utils.matToBitmap(warped, b);
+    PerspectiveTransformation transfom = new PerspectiveTransformation();
+    Mat dest = transfom.transform(image, rectangle);
+
+    Bitmap b = ImageUtils.matToBitmap(dest);
 
     String savePath = new File(path).getAbsoluteFile().getParent();
     savePath += "transformed-image" + new Date().getTime() + ".png";
@@ -117,7 +123,7 @@ class ImageDetector {
       stream.close();
 
       JSONObject outer = new JSONObject();
-      outer.put("foundFeatures", ImageDetector.serializeRectangleData(foundContours, image));
+      outer.put("foundFeatures", ImageDetector.serializeRectangleData(rectangle, image));
       outer.put("filePath", savePath);
 
       return outer.toString();
@@ -128,52 +134,5 @@ class ImageDetector {
     } catch (JSONException e) {
       return null;
     }
-
-  }
-
-  private static MatOfPoint2f findContoursFromImage(Mat source) {
-    source = ImageTransformer.transformToGrey(source);
-    source = ImageTransformer.gaussianBlur(source);
-    source = ImageTransformer.cannyEdgeDetect(source);
-
-    ArrayList<MatOfPoint> contours = new ArrayList<>();
-
-    Imgproc.findContours(
-        source,
-        contours,
-        new Mat(),
-        Imgproc.RETR_LIST,
-        Imgproc.CHAIN_APPROX_SIMPLE);
-
-      Collections.sort(contours, new Comparator<MatOfPoint>() {
-          @Override
-          public int compare(MatOfPoint o1, MatOfPoint o2) {
-              double first = Imgproc.contourArea(new MatOfPoint2f(o1.toArray()));
-              double second = Imgproc.contourArea( new MatOfPoint2f(o2.toArray()));
-
-              if (first == second ) {
-                  return 0;
-              }
-
-              return first > second ? 1 : -1;
-          }
-      });
-
-    contours = (ArrayList<MatOfPoint>)contours.subList(0 , 5);
-    MatOfPoint2f maxApprox = null;
-
-    for (MatOfPoint contour : contours) {
-      MatOfPoint2f maxContour2f = new MatOfPoint2f(contour.toArray());
-      double peri = Imgproc.arcLength(maxContour2f, true);
-      MatOfPoint2f approx = new MatOfPoint2f();
-      Imgproc.approxPolyDP(maxContour2f, approx, 0.04 * peri, true);
-
-      if (approx.total() == 4) {
-        maxApprox = approx;
-        break;
-      }
-    }
-
-    return maxApprox;
   }
 }
