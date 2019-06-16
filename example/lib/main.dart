@@ -33,6 +33,28 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  Future<String> _loadTestImage() async {
+    var directory2 = await getApplicationDocumentsDirectory();
+
+    var path = "${directory2.path}/images/tmp1.png";
+
+    var file = File(path);
+    if (!await file.exists()) {
+      var data = await rootBundle.load("images/rectangle.jpg");
+
+      try {
+        await file.create(recursive: true);
+      } catch (e) {
+        print(e);
+      }
+
+      file.writeAsBytes(
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    }
+
+    return path;
+  }
+
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     String platformVersion;
@@ -44,23 +66,7 @@ class _MyAppState extends State<MyApp> {
     }
 
     try {
-      var directory2 = await getApplicationDocumentsDirectory();
-
-      var path = "${directory2.path}/images/tmp5.png";
-
-      var file = File(path);
-      if (!await file.exists()) {
-        var data = await rootBundle.load("images/rectangle2.jpg");
-
-        try {
-          await file.create(recursive: true);
-        } catch (e) {
-          print(e);
-        }
-
-        file.writeAsBytes(
-            data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
-      }
+      var path = await _loadTestImage();
 
       setState(() {
         _filePath = path;
@@ -75,6 +81,22 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _platformVersion = platformVersion;
     });
+  }
+
+  void _reloadTestImage() async {
+    var f = File(_filePath);
+
+    if (f.existsSync()) {
+      f.deleteSync(recursive: true);
+    }
+
+    if (!f.existsSync()) {
+      var s = await _loadTestImage();
+
+      setState(() {
+        _filePath = s;
+      });
+    }
   }
 
   @override
@@ -108,16 +130,23 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
+          child: SingleChildScrollView(
             child: Column(
-          children: <Widget>[
-            Text('Running on: $_platformVersion\n'),
-            c,
-            Text("Example RelativePointHelper using Point:"),
-            Text(
-                "Calculated values: x: ${_testPoint != null ? _testPoint.x : "-"}, y: ${_testPoint != null ? _testPoint.y : "-"}"),
-            image
-          ],
-        )),
+              children: <Widget>[
+                Text('Running on: $_platformVersion\n'),
+                c,
+                Text("Example RelativePointHelper using Point:"),
+                Text(
+                    "Calculated values: x: ${_testPoint != null ? _testPoint.x : "-"}, y: ${_testPoint != null ? _testPoint.y : "-"}"),
+                FlatButton(
+                  child: Text("Reload test image"),
+                  onPressed: _reloadTestImage,
+                ),
+                image
+              ],
+            ),
+          ),
+        ),
         floatingActionButton: FloatingActionButton(
             child: Icon(Icons.image),
             onPressed: () async {

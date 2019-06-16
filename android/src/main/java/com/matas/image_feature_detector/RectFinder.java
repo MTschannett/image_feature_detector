@@ -28,12 +28,17 @@ public class RectFinder {
     private static final int CANNY_TRESHOLD_MIN = 75;
     private static final double DOWNSCALE_IMAGE_SIZE = 600f;
 
+    /*
     private double areaLowerThresholdRatio;
     private double areaUpperThresholdRatio;
+    double areaLowerThresholdRatio, double areaUpperThresholdRatio
+    */
+    public RectFinder() {
 
-    public RectFinder(double areaLowerThresholdRatio, double areaUpperThresholdRatio) {
+       /*
         this.areaLowerThresholdRatio = areaLowerThresholdRatio;
         this.areaUpperThresholdRatio = areaUpperThresholdRatio;
+         */
     }
 
     public MatOfPoint2f findRectangle(Mat src) {
@@ -81,32 +86,18 @@ public class RectFinder {
         // Blur the image to filter out the noise.
         Mat grey = new Mat();
         Imgproc.cvtColor(src, grey, Imgproc.COLOR_BGR2GRAY);
-        Bitmap b = ImageUtils.matToBitmap(grey);
+
         Mat blur = new Mat(grey.size(), CvType.CV_8U);
         Imgproc.GaussianBlur(grey, blur, new Size(5,5), 0);
-        Bitmap c = ImageUtils.matToBitmap(blur);
 
         Mat edged = new Mat(blur.size(), CvType.CV_8U);
         Imgproc.Canny(blur, edged, RectFinder.CANNY_TRESHOLD_MIN, CANNY_THRESHOLD);
-        Bitmap d = ImageUtils.matToBitmap(edged);
-
-//        Imgproc.medianBlur(src, blurred, 9);
-//
-//        // Set up images to use.
-//        Mat gray0 = new Mat(blurred.size(), CvType.CV_8U);
-//        Mat gray = new Mat();
-//
-//        // For Core.mixChannels.
+        Bitmap tempt = ImageUtils.matToBitmap(edged);
         List<MatOfPoint> contours = new ArrayList<>();
         List<MatOfPoint2f> rectangles = new ArrayList<>();
-//
-//        List<Mat> sources = new ArrayList<>();
-//        sources.add(blurred);
-//        List<Mat> destinations = new ArrayList<>();
-//        destinations.add(gray0);
 
         // To filter rectangles by their areas.
-        int srcArea = src.rows() * src.cols();
+        // int srcArea = src.rows() * src.cols();
 
         Imgproc.findContours(edged, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
@@ -118,68 +109,21 @@ public class RectFinder {
             MatOfPoint2f approx = new MatOfPoint2f();
             Imgproc.approxPolyDP(contourFloat, approx, arcLen, true);
 
-            if (isRectangle(approx, srcArea)) {
+            if (isRectangle(approx)) {
                 rectangles.add(approx);
             }
         }
-//
-//        // Find squares in every color plane of the image.
-//        for (int c = 0; c < 3; c++) {
-//            int[] ch = {c, 0};
-//            MatOfInt fromTo = new MatOfInt(ch);
-//
-//            Core.mixChannels(sources, destinations, fromTo);
-//
-//            // Try several threshold levels.
-//            for (int l = 0; l < N; l++) {
-//                if (l == 0) {
-//                    // HACK: Use Canny instead of zero threshold level.
-//                    // Canny helps to catch squares with gradient shading.
-//                    // NOTE: No kernel size parameters on Java API.
-//                    Imgproc.Canny(gray0, gray, CANNY_TRESHOLD_MIN, CANNY_THRESHOLD);
-//
-//                    // Dilate Canny output to remove potential holes between edge segments.
-//                    Imgproc.dilate(gray, gray, Mat.ones(new Size(3, 3), 0));
-//                } else {
-//                    int threshold = (l + 1) * 255 / N;
-//                    Imgproc.threshold(gray0, gray, threshold, 255, Imgproc.THRESH_BINARY);
-//                }
-//
-//                // Find contours and store them all as a list.
-//
-//            }
-//        }
 
         return rectangles;
     }
 
-    private boolean isRectangle(MatOfPoint2f polygon, int srcArea) {
+    private boolean isRectangle(MatOfPoint2f polygon) {
         MatOfPoint polygonInt = GeomUtils.toMatOfPointInt(polygon);
 
         if (polygon.rows() != 4) {
             return false;
         }
 
-//        double area = Math.abs(Imgproc.contourArea(polygon));
-//        if (area < srcArea * areaLowerThresholdRatio || area > srcArea * areaUpperThresholdRatio) {
-//            return false;
-//        }
-
-        if (!Imgproc.isContourConvex(polygonInt)) {
-            return false;
-        }
-
-//        // Check if the all angles are more than 72.54 degrees (cos 0.3).
-//        double maxCosine = 0;
-//        Point[] approxPoints = polygon.toArray();
-//
-//        for (int i = 2; i < 5; i++) {
-//            double cosine = Math.abs(GeomUtils.angle(approxPoints[i % 4], approxPoints[i - 2], approxPoints[i - 1]));
-//            maxCosine = Math.max(cosine, maxCosine);
-//        }
-
-//        return !(maxCosine >= 0.3);
-
-        return true;
+        return Imgproc.isContourConvex(polygonInt);
     }
 }

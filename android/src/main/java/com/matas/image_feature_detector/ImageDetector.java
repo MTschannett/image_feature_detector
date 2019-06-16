@@ -45,7 +45,7 @@ class ImageDetector {
   static String detectRectangles(String filePath) {
     Mat source = ImageHelper.loadImage(filePath);
 
-    RectFinder finder = new RectFinder(.2, .98);
+    RectFinder finder = new RectFinder();
     MatOfPoint2f rectangle = finder.findRectangle(source);
 
     try {
@@ -99,15 +99,15 @@ class ImageDetector {
   static String detectAndTransformRectangleInImage(String path) {
     Mat image = ImageHelper.loadImage(path);
 
-    RectFinder finder = new RectFinder(.2, .98);
+    RectFinder finder = new RectFinder();
     MatOfPoint2f rectangle = finder.findRectangle(image);
 
     if (rectangle == null) {
       return null;
     }
 
-    PerspectiveTransformation transfom = new PerspectiveTransformation();
-    Mat dest = transfom.transform(image, rectangle);
+    PerspectiveTransformation transform = new PerspectiveTransformation();
+    Mat dest = transform.transform(image, rectangle);
 
     Bitmap b = ImageUtils.matToBitmap(dest);
 
