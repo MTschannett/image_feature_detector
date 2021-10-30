@@ -4,13 +4,13 @@ version: 0.2.1
 author: "Marco Tschannett<me@mtsch.dev>"
 homepage: https://github.com/MTschannett/image_feature_detector
 repository: https://github.com/MTschannett/image_feature_detector
-documentation: 
+documentation:
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
 
 dependencies:
-  path_provider: ^0.5.0+1
+  path_provider: ^2.0.6
   flutter:
     sdk: flutter
 
